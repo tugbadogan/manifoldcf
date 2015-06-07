@@ -36,6 +36,17 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
   public final static String REMOVE_ACTIVITY = "document deletion";
   /** Job notify activity */
   public final static String JOB_COMPLETE_ACTIVITY = "output notification";
+  
+  private final static String KAFKA_TAB_PARAMETERS = "KafkaConnector.Parameters";
+
+  /** Forward to the javascript to check the configuration parameters */
+  private static final String EDIT_CONFIG_HEADER_FORWARD = "editConfiguration.js";
+  
+   /** Forward to the HTML template to edit the configuration parameters */
+  private static final String EDIT_CONFIG_FORWARD_PARAMETERS = "editConfiguration_Parameters.html";
+
+  /** Forward to the HTML template to view the configuration parameters */
+  private static final String VIEW_CONFIG_FORWARD = "viewConfiguration.html";
 
   /** Constructor.
   */
@@ -78,6 +89,79 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
   {
   }
 
+  private static void outputResource(String resName, IHTTPOutput out,
+      Locale locale, KafkaParam params,
+      String tabName, Integer sequenceNumber, Integer currentSequenceNumber) throws ManifoldCFException
+  {
+    Map<String,String> paramMap = null;
+    if (params != null) {
+      paramMap = params.buildMap();
+      if (tabName != null) {
+        paramMap.put("TabName", tabName);
+      }
+      if (currentSequenceNumber != null)
+        paramMap.put("SelectedNum",currentSequenceNumber.toString());
+    }
+    else
+    {
+      paramMap = new HashMap<String,String>();
+    }
+    if (sequenceNumber != null)
+      paramMap.put("SeqNum",sequenceNumber.toString());
+
+    Messages.outputResourceWithVelocity(out, locale, resName, paramMap, true);
+  }
+  
+  @Override
+  public void outputConfigurationHeader(IThreadContext threadContext,
+      IHTTPOutput out, Locale locale, ConfigParams parameters,
+      List<String> tabsArray) throws ManifoldCFException, IOException
+  {
+    super.outputConfigurationHeader(threadContext, out, locale, parameters,
+        tabsArray);
+    tabsArray.add(Messages.getString(locale, KAFKA_TAB_PARAMETERS));
+    outputResource(EDIT_CONFIG_HEADER_FORWARD, out, locale, null, null, null, null);
+  }
+  
+  @Override
+  public void outputConfigurationBody(IThreadContext threadContext,
+      IHTTPOutput out, Locale locale, ConfigParams parameters, String tabName)
+      throws ManifoldCFException, IOException
+  {
+    super.outputConfigurationBody(threadContext, out, locale, parameters,
+        tabName);
+    KafkaConfig config = this.getConfigParameters(parameters);
+    outputResource(EDIT_CONFIG_FORWARD_PARAMETERS, out, locale, config, tabName, null, null);
+  }
+  
+  final private KafkaConfig getConfigParameters(
+      ConfigParams configParams)
+  {
+    if (configParams == null)
+      configParams = getConfiguration();
+    return new KafkaConfig(configParams);
+  }
+  
+  @Override
+  public void viewConfiguration(IThreadContext threadContext, IHTTPOutput out,
+      Locale locale, ConfigParams parameters) throws ManifoldCFException,
+      IOException
+  {
+    outputResource(VIEW_CONFIG_FORWARD, out, locale,
+        getConfigParameters(parameters), null, null, null);
+  }
+  
+  @Override
+  public String processConfigurationPost(IThreadContext threadContext,
+      IPostParameters variableContext, ConfigParams parameters)
+      throws ManifoldCFException
+  {
+    KafkaConfig.contextToConfig(variableContext, parameters);
+    return null;
+  }
+  
+  
+  
   /** Test the connection.  Returns a string describing the connection integrity.
   *@return the connection's status as a displayable string.
   */
