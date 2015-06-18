@@ -18,10 +18,10 @@
 <script type="text/javascript">
 <!--
 function checkConfig() {
-  if (editconnection.IP) {
-    if (editconnection.IP.value == "") {
+  if (editconnection.ip) {
+    if (editconnection.ip.value == "") {
       alert("$Encoder.bodyJavascriptEscape($ResourceBundle.getString('KafkaConnector.PleaseSupplyValidKafkaLocation'))");
-      editconnection.IP.focus();
+      editconnection.ip.focus();
       return false;
     }
   }
@@ -43,11 +43,11 @@ function checkConfig() {
 }
 
 function checkConfigForSave() {
-  if (editconnection.IP) {
-    if (editconnection.IP.value == "") {
+  if (editconnection.ip) {
+    if (editconnection.ip.value == "") {
       alert("$Encoder.bodyJavascriptEscape($ResourceBundle.getString('KafkaConnector.PleaseSupplyValidIP'))");
       SelectTab("$Encoder.javascriptBodyEscape($ResourceBundle.getString('KafkaConnector.Parameters'))");
-      editconnection.IP.focus();
+      editconnection.ip.focus();
       return false;
     }
   }

@@ -20,10 +20,10 @@
 <table class="displaytable">
   <tr>
     <td class="description">
-      <nobr>$Encoder.bodyEscape($ResourceBundle.getString('KafkaConnector.IP'))</nobr>
+      <nobr>$Encoder.bodyEscape($ResourceBundle.getString('KafkaConnector.IPColon'))</nobr>
         
     </td>
-    <td class="value"><input name="IP" type="text"
+    <td class="value"><input name="ip" type="text"
       value="$Encoder.attributeEscape($IP)" size="48" />
     </td>
   </tr>
@@ -41,7 +41,7 @@
 
 #else
 
-<input type="hidden" name="IP" value="$Encoder.attributeEscape($IP)" />
+<input type="hidden" name="ip" value="$Encoder.attributeEscape($IP)" />
 <input type="hidden" name="port" value="$Encoder.attributeEscape($PORT)" />
 <input type="hidden" name="topic" value="$Encoder.attributeEscape($TOPIC)" />
 
