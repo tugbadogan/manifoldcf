@@ -18,25 +18,25 @@
 #if($TABNAME == $ResourceBundle.getString('KafkaConnector.Parameters'))
 
 <table class="displaytable">
-  <tr>
-    <td class="description">
-      <nobr>$Encoder.bodyEscape($ResourceBundle.getString('KafkaConnector.IPColon'))</nobr>
-        
-    </td>
-    <td class="value"><input name="ip" type="text"
-      value="$Encoder.attributeEscape($IP)" size="48" />
-    </td>
-  </tr>
-  <tr>
+    <tr>
+        <td class="description">
+    <nobr>$Encoder.bodyEscape($ResourceBundle.getString('KafkaConnector.IPColon'))</nobr>
+
+</td>
+<td class="value"><input name="ip" type="text"
+                         value="$Encoder.attributeEscape($IP)" size="48" />
+</td>
+</tr>
+<tr>
     <td class="description"><nobr>$Encoder.bodyEscape($ResourceBundle.getString('KafkaConnector.PortColon'))</nobr></td>
-    <td class="value"><input name="port" type="text" value="$Encoder.attributeEscape($PORT)"
-      size="24" /></td>
-  </tr>
-  <tr>
+<td class="value"><input name="port" type="text" value="$Encoder.attributeEscape($PORT)"
+                         size="24" /></td>
+</tr>
+<tr>
     <td class="description"><nobr>$Encoder.bodyEscape($ResourceBundle.getString('KafkaConnector.TopicColon'))</nobr></td>
-    <td class="value"><input name="topic" type="text" value="$Encoder.attributeEscape($TOPIC)"
-      size="24" /></td>
-  </tr>
+<td class="value"><input name="topic" type="text" value="$Encoder.attributeEscape($TOPIC)"
+                         size="24" /></td>
+</tr>
 </table>
 
 #else

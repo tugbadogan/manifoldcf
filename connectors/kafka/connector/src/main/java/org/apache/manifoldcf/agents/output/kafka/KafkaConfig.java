@@ -1,4 +1,3 @@
-/* $Id: KafkaConfig.java 1299512 2012-03-12 00:58:38Z piergiorgio $ */
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
@@ -15,16 +14,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package org.apache.manifoldcf.agents.output.kafka;
 
 public class KafkaConfig {
 
-    // Configuration parameters
-    public static final String IP = "ip";
-    public static final String PORT = "port";
-    public static final String TOPIC = "topic";
-    
-    public static final String IP_DEFAULT = "localhost";
-    public static final String PORT_DEFAULT = "9092";
-    public static final String TOPIC_DEFAULT = "topic";
+  // Configuration parameters
+  public static final String IP = "ip";
+  public static final String PORT = "port";
+  public static final String TOPIC = "topic";
+
+  public static final String IP_DEFAULT = "localhost";
+  public static final String PORT_DEFAULT = "9092";
+  public static final String TOPIC_DEFAULT = "topic";
 }
