@@ -22,10 +22,10 @@ import org.apache.manifoldcf.agents.interfaces.*;
 
 import java.util.*;
 import java.io.*;
-
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.PartitionInfo;
 
 /**
@@ -40,10 +40,7 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
    * Ingestion activity
    */
   public final static String INGEST_ACTIVITY = "document ingest";
-  /**
-   * Document removal activity
-   */
-  public final static String REMOVE_ACTIVITY = "document deletion";
+
   /**
    * Job notify activity
    */
@@ -67,6 +64,33 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
   private static final String VIEW_CONFIG_FORWARD = "viewConfiguration.html";
 
   /**
+   * cloudsearch field name for file body text.
+   */
+  private static final String FILE_BODY_TEXT_FIELDNAME = "f_bodytext";
+
+  /**
+   * Field name we use for document's URI.
+   */
+  private static final String DOCUMENT_URI_FIELDNAME = "document_URI";
+
+  /**
+   * The allow attribute name
+   */
+  protected final static String allowAttributeName = "allow_token_";
+  /**
+   * The deny attribute name
+   */
+  protected final static String denyAttributeName = "deny_token_";
+  /**
+   * The no-security token
+   */
+  protected final static String noSecurityToken = "__nosecurity__";
+
+  protected final static boolean useNullValue = false;
+
+  KafkaProducer producer = null;
+
+  /**
    * Constructor.
    */
   public KafkaOutputConnector() {
@@ -80,7 +104,7 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
    */
   @Override
   public String[] getActivitiesList() {
-    return new String[]{INGEST_ACTIVITY, REMOVE_ACTIVITY, JOB_COMPLETE_ACTIVITY};
+    return new String[]{INGEST_ACTIVITY, JOB_COMPLETE_ACTIVITY};
   }
 
   /**
@@ -109,6 +133,20 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
    */
   protected void getSession()
           throws ManifoldCFException, ServiceInterruption {
+    Properties props = new Properties();
+    String IP = params.getParameter(KafkaConfig.IP);
+    String PORT = params.getParameter(KafkaConfig.PORT);
+    //System.out.println("Kafka IP: " + IP);
+    //System.out.println("Kafka Port: " + PORT);
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, IP + ":" + PORT);
+    props.put(ProducerConfig.RETRIES_CONFIG, "3");
+    props.put(ProducerConfig.ACKS_CONFIG, "all");
+    props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "none");
+    props.put(ProducerConfig.BATCH_SIZE_CONFIG, 200);
+    props.put(ProducerConfig.BLOCK_ON_BUFFER_FULL_CONFIG, true);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
+    producer = new KafkaProducer(props);
   }
 
   /**
@@ -216,30 +254,8 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
           throws ManifoldCFException {
     try {
       getSession();
-      //return super.check();
-      Properties props = new Properties();
-      String IP = params.getParameter(KafkaConfig.IP);
-      String PORT = params.getParameter(KafkaConfig.PORT);
-      System.out.println("Kafka IP: " + IP);
-      System.out.println("Kafka Port: " + PORT);
-      props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, IP + ":" + PORT);
-      props.put(ProducerConfig.RETRIES_CONFIG, "3");
-      props.put(ProducerConfig.ACKS_CONFIG, "all");
-      props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "none");
-      props.put(ProducerConfig.BATCH_SIZE_CONFIG, 200);
-      props.put(ProducerConfig.BLOCK_ON_BUFFER_FULL_CONFIG, true);
-      props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-      props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
 
-      KafkaProducer producer = new KafkaProducer(props);
       List<PartitionInfo> partitions = producer.partitionsFor(params.getParameter(KafkaConfig.TOPIC));
-
-      /*Map<MetricName, Metric> metrics = producer.metrics();
-       for (Entry<MetricName, Metric> entry : metrics.entrySet()) {
-       System.out.println("Name: " + entry.getKey() + " Value: " + entry.getValue());
-       }*/
-            // ProducerRecord record = new ProducerRecord("test-topic", "test-value");
-      // producer.send(record);
       return "Connection works";
     } catch (Exception e) {
       return "Transient error: " + e.getMessage();
@@ -305,33 +321,25 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
           throws ManifoldCFException, ServiceInterruption, IOException {
     // Establish a session
     getSession();
+
+    //System.out.println("Starting to ingest document....");
+    try {
+      KafkaMessage kafkaMessage = new KafkaMessage();
+      // Get document info in JSON format
+      byte[] finalString = kafkaMessage.createJSON(document);
+
+      ProducerRecord record = new ProducerRecord(params.getParameter(KafkaConfig.TOPIC), finalString);
+      producer.send(record);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "REJECTED DOCUMENT", null);
+      return DOCUMENTSTATUS_REJECTED;
+    }
     activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "OK", null);
     return DOCUMENTSTATUS_ACCEPTED;
-  }
 
-  /**
-   * Remove a document using the connector. Note that the last outputDescription
-   * is included, since it may be necessary for the connector to use such
-   * information to know how to properly remove the document.
-   *
-   * @param documentURI is the URI of the document. The URI is presumed to be
-   * the unique identifier which the output data store will use to process and
-   * serve the document. This URI is constructed by the repository connector
-   * which fetches the document, and is thus universal across all output
-   * connectors.
-   * @param outputDescription is the last description string that was
-   * constructed for this document by the getOutputDescription() method above.
-   * @param activities is the handle to an object that the implementer of an
-   * output connector may use to perform operations, such as logging processing
-   * activity.
-   */
-  @Override
-  public void removeDocument(String documentURI, String outputDescription, IOutputRemoveActivity activities)
-          throws ManifoldCFException, ServiceInterruption {
-    // Establish a session
-    getSession();
-    activities.recordActivity(null, REMOVE_ACTIVITY, null, documentURI, "OK", null);
-  }
+  }  
 
   /**
    * Notify the connector of a completed job. This is meant to allow the
