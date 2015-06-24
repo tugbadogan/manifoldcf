@@ -329,7 +329,14 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
       byte[] finalString = kafkaMessage.createJSON(document);
 
       ProducerRecord record = new ProducerRecord(params.getParameter(KafkaConfig.TOPIC), finalString);
-      producer.send(record);
+      try {
+        producer.send(record).get();
+      } catch (Exception e) {
+        e.printStackTrace();
+        activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "REJECTED DOCUMENT", null);
+        return DOCUMENTSTATUS_REJECTED;
+
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -339,7 +346,7 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "OK", null);
     return DOCUMENTSTATUS_ACCEPTED;
 
-  }  
+  }
 
   /**
    * Notify the connector of a completed job. This is meant to allow the
