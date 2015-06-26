@@ -256,7 +256,7 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
       getSession();
 
       List<PartitionInfo> partitions = producer.partitionsFor(params.getParameter(KafkaConfig.TOPIC));
-      return "Connection works";
+      return super.check();
     } catch (Exception e) {
       return "Transient error: " + e.getMessage();
     }
@@ -329,18 +329,10 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
       byte[] finalString = kafkaMessage.createJSON(document);
 
       ProducerRecord record = new ProducerRecord(params.getParameter(KafkaConfig.TOPIC), finalString);
-      try {
-        producer.send(record).get();
-      } catch (Exception e) {
-        e.printStackTrace();
-        activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "REJECTED DOCUMENT", null);
-        return DOCUMENTSTATUS_REJECTED;
-
-      }
-
+      producer.send(record).get();
     } catch (Exception e) {
       e.printStackTrace();
-      activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "REJECTED DOCUMENT", null);
+      activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "REJECTED DOCUMENT " + e.getMessage(), null);
       return DOCUMENTSTATUS_REJECTED;
     }
     activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "OK", null);
