@@ -16,6 +16,9 @@
 -->
 
 <project name="kafka" default="all">
+	<presetdef name="javac">
+    <javac includeantruntime="false" />
+  </presetdef>
 
     <property environment="env"/>
     <condition property="mcf-dist" value="${env.MCFDISTPATH}">
