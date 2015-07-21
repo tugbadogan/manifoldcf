@@ -16,9 +16,6 @@
  */
 package org.apache.manifoldcf.agents.output.kafka;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
 import static org.mockito.Mockito.verify;
 import java.util.HashMap;
 import org.apache.manifoldcf.agents.interfaces.*;
@@ -37,6 +34,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,6 +45,7 @@ public class KafkaConnectorTest {
   private KafkaProducer producer;
 
   private KafkaOutputConnector connector;
+  RepositoryDocument document;
 
   @Before
   public void setup() throws Exception {
@@ -55,77 +55,24 @@ public class KafkaConnectorTest {
 
   @Test
   public void whenSendingDocumenttoKafka() throws Exception {
-    RepositoryDocument document = new RepositoryDocument();
+
+    document = new RepositoryDocument();
+
+    document.setMimeType("text\'/plain");
+    document.setFileName("test.txt");
+
     KafkaMessage kafkaMessage = new KafkaMessage();
     byte[] finalString = kafkaMessage.createJSON(document);
 
-    document.addField("allow_token_document", "__nosecurity__");
-    document.addField("deny_token_document", "__nosecurity__");
-    document.addField("allow_token_share", "__nosecurity__");
-    document.addField("deny_token_share", "__nosecurity__");
-    document.addField("allow_token_parent", "__nosecurity__");
-    document.addField("deny_token_parent", "__nosecurity__");
-    document.addField("_name", "test.txt");
-    document.addField("_content", "testDocument");
-
-    /*VersionContext v = new VersionContext(null, null, null);
-    IOutputAddActivity a = new IOutputAddActivity() {
-
-      @Override
-      public int sendDocument(String documentURI, RepositoryDocument document) throws ManifoldCFException, ServiceInterruption, IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void noDocument() throws ManifoldCFException, ServiceInterruption {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public String qualifyAccessToken(String authorityNameString, String accessToken) throws ManifoldCFException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void recordActivity(Long startTime, String activityType, Long dataSize, String entityURI, String resultCode, String resultDescription) throws ManifoldCFException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean checkDateIndexable(Date date) throws ManifoldCFException, ServiceInterruption {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean checkMimeTypeIndexable(String mimeType) throws ManifoldCFException, ServiceInterruption {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean checkDocumentIndexable(File localFile) throws ManifoldCFException, ServiceInterruption {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean checkLengthIndexable(long length) throws ManifoldCFException, ServiceInterruption {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean checkURLIndexable(String url) throws ManifoldCFException, ServiceInterruption {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-    };*/
-    
-    
-    //connector.addOrReplaceDocumentWithException("document_uri", v, document, "",a);
-    
-    //connector.addOrReplaceDocumentWithException("document_uri", Mockito.any(VersionContext.class), document, "", Mockito.any(IOutputAddActivity.class));
-    
+    IOutputAddActivity activities = mock(IOutputAddActivity.class);
+    VersionContext version = mock(VersionContext.class);
     ProducerRecord record = new ProducerRecord("topic", finalString);
-    verify(producer).send(record);
-    
-    connector.addOrReplaceDocumentWithException("document_uri", Mockito.any(VersionContext.class), document, "", Mockito.any(IOutputAddActivity.class));
+
+    when(producer.send(Mockito.any(ProducerRecord.class))).thenReturn(null);
+
+    connector.addOrReplaceDocumentWithException("document_uri", version, document, "", activities);
+    verify(producer).send(record, null);
+    //verify(producer).send(record).get();
   }
 
   @SuppressWarnings("serial")
