@@ -16,24 +16,20 @@
  */
 package org.apache.manifoldcf.agents.output.kafka;
 
-import static org.mockito.Mockito.verify;
-import java.util.HashMap;
-import org.apache.manifoldcf.agents.interfaces.*;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.manifoldcf.agents.interfaces.IOutputAddActivity;
+import org.apache.commons.lang3.concurrent.ConcurrentUtils;
 
-/*import com.github.maoo.indexer.client.AlfrescoClient;
- import com.github.maoo.indexer.client.AlfrescoFilters;
- import com.github.maoo.indexer.client.AlfrescoResponse;*/
 import org.apache.manifoldcf.agents.interfaces.RepositoryDocument;
-import org.apache.manifoldcf.core.interfaces.ManifoldCFException;
 import org.apache.manifoldcf.core.interfaces.VersionContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -45,16 +41,18 @@ public class KafkaConnectorTest {
   private KafkaProducer producer;
 
   private KafkaOutputConnector connector;
-  RepositoryDocument document;
 
   @Before
   public void setup() throws Exception {
     connector = new KafkaOutputConnector();
     connector.setProducer(producer);
+
+    when(producer.send(Mockito.any(ProducerRecord.class))).thenReturn(ConcurrentUtils.constantFuture(true));
   }
 
   @Test
   public void whenSendingDocumenttoKafka() throws Exception {
+    RepositoryDocument document;
 
     document = new RepositoryDocument();
 
@@ -66,36 +64,9 @@ public class KafkaConnectorTest {
 
     IOutputAddActivity activities = mock(IOutputAddActivity.class);
     VersionContext version = mock(VersionContext.class);
-    ProducerRecord record = new ProducerRecord("topic", finalString);
+    //ProducerRecord record = new ProducerRecord("topic", finalString);
 
-    when(producer.send(Mockito.any(ProducerRecord.class))).thenReturn(null);
-
-    connector.addOrReplaceDocumentWithException("document_uri", version, document, "", activities);
-    verify(producer).send(record, null);
-    //verify(producer).send(record).get();
-  }
-
-  @SuppressWarnings("serial")
-  private class TestDocument extends HashMap<String, Object> {
-
-    static final String IP = "localhost";
-    static final String port = "9092";
-    static final String topic = "topic";
-
-    public TestDocument() {
-      super();
-      put("IP", IP);
-      put("port", port);
-      put("topic", topic);
-    }
-
-    public RepositoryDocument getRepositoryDocument() throws ManifoldCFException {
-      RepositoryDocument rd = new RepositoryDocument();
-      rd.setFileName("name");
-      for (String property : keySet()) {
-        rd.addField(property, get(property).toString());
-      }
-      return rd;
-    }
+    connector.addOrReplaceDocumentWithException("", version, document, "", activities);
+    verify(producer).send(Mockito.any(ProducerRecord.class));
   }
 }

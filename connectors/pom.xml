@@ -34,7 +34,6 @@
   <modules>
     <!-- common modules -->
     <module>activedirectory</module>
-    <module>alfresco-webscript</module>
     <module>filesystem</module>
     <module>gts</module>
     <module>hdfs</module>
@@ -44,7 +43,6 @@
     <module>ldap</module>
     <module>nullauthority</module>
     <module>nulloutput</module>
-	<module>kafka</module>
     <module>nulltransformation</module>
     <module>rss</module>
     <module>sharepoint</module>
@@ -54,7 +52,6 @@
     <module>opensearchserver</module>
     <module>wiki</module>
     <module>alfresco</module>
-    <module>elasticsearch</module>
     <module>dropbox</module>
     <module>googledrive</module>
     <module>jira</module>

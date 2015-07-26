@@ -340,13 +340,13 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     //getSession();
 
     //System.out.println("Starting to ingest document....");
-    
     try {
       KafkaMessage kafkaMessage = new KafkaMessage();
       // Get document info in JSON format
       byte[] finalString = kafkaMessage.createJSON(document);
+      String topic = getConfig(params, KafkaConfig.TOPIC, "topic");
 
-      ProducerRecord record = new ProducerRecord(params.getParameter(KafkaConfig.TOPIC), finalString);
+      ProducerRecord record = new ProducerRecord(topic, finalString);
       producer.send(record).get();
     } catch (Exception e) {
       e.printStackTrace();
@@ -356,6 +356,20 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "OK", null);
     return DOCUMENTSTATUS_ACCEPTED;
 
+  }
+
+  private static String getConfig(ConfigParams config,
+          String parameter,
+          String defaultValue) {
+    if(config == null)
+    {
+      return defaultValue;
+    }
+    final String protocol = config.getParameter(parameter);
+    if (protocol == null) {
+      return defaultValue;
+    }
+    return protocol;
   }
 
   /**
