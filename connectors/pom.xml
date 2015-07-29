@@ -36,7 +36,6 @@
     <module>activedirectory</module>
     <module>filesystem</module>
     <module>gts</module>
-    <module>hdfs</module>
     <module>jcifs</module>
     <module>jdbc</module>
     <module>gridfs</module>
@@ -51,7 +50,6 @@
     <module>cmis</module>
     <module>opensearchserver</module>
     <module>wiki</module>
-    <module>alfresco</module>
     <module>dropbox</module>
     <module>googledrive</module>
     <module>jira</module>

@@ -38,6 +38,9 @@
             <param name="connector-label" value="Kafka"/>
             <param name="connector-class" value="org.apache.manifoldcf.agents.output.kafka.KafkaOutputConnector"/>
         </antcall>
+		<antcall target="general-add-repository-connector">
+            <param name="connector-label" value="Kafka"/>
+            <param name="connector-class" value="org.apache.manifoldcf.crawler.connectors.kafka.KafkaRepositoryConnector"/>
+        </antcall>
     </target>
-
 </project>

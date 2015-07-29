@@ -26,5 +26,6 @@ public class KafkaConfig {
 
   public static final String IP_DEFAULT = "localhost";
   public static final String PORT_DEFAULT = "9092";
+  public static final String PORT_DEFAULT2 = "2181";
   public static final String TOPIC_DEFAULT = "topic";
 }
