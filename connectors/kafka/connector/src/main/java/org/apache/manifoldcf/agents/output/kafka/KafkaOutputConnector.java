@@ -1,19 +1,19 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements. See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License. You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.apache.manifoldcf.agents.output.kafka;
 
 import org.apache.manifoldcf.core.interfaces.*;
@@ -146,26 +146,6 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     super.disconnect();
   }
 
-  /**
-   * Set up a session
-   */
-  /*protected void getSession()
-   throws ManifoldCFException, ServiceInterruption {
-   Properties props = new Properties();
-   String IP = params.getParameter(KafkaConfig.IP);
-   String PORT = params.getParameter(KafkaConfig.PORT);
-   //System.out.println("Kafka IP: " + IP);
-   //System.out.println("Kafka Port: " + PORT);
-   props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, IP + ":" + PORT);
-   props.put(ProducerConfig.RETRIES_CONFIG, "3");
-   props.put(ProducerConfig.ACKS_CONFIG, "all");
-   props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "none");
-   props.put(ProducerConfig.BATCH_SIZE_CONFIG, 200);
-   props.put(ProducerConfig.BLOCK_ON_BUFFER_FULL_CONFIG, true);
-   props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-   props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
-   producer = new KafkaProducer(props);
-   }*/
   /**
    * Fill in a Server tab configuration parameter map for calling a Velocity
    * template.
