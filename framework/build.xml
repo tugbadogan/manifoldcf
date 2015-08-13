@@ -1366,6 +1366,10 @@
                 <include name="fontbox*.jar"/>
                 <include name="jempbox*.jar"/>
                 <include name="kafka*.jar"/>
+				<include name="scala*.jar"/>
+				<include name="zkclient*.jar"/>
+				<include name="metrics*.jar"/>
+				<include name="jopt*.jar"/>
                 <include name="bcmail-jdk15*.jar"/>
                 <include name="bcprov-jdk15*.jar"/>
                 <include name="xmlbeans*.jar"/>

@@ -1,28 +1,39 @@
 /**
-* Licensed to the Apache Software Foundation (ASF) under one or more
-* contributor license agreements. See the NOTICE file distributed with
-* this work for additional information regarding copyright ownership.
-* The ASF licenses this file to You under the Apache License, Version 2.0
-* (the "License"); you may not use this file except in compliance with
-* the License. You may obtain a copy of the License at
-*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with this
+ * work for additional information regarding copyright ownership. The ASF
+ * licenses this file to You under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
 * http://www.apache.org/licenses/LICENSE-2.0
-*
+ * 
 * Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.apache.manifoldcf.crawler.connectors.kafka;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
-
-import java.io.*;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.ConsumerIterator;
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.message.MessageAndMetadata;
 
 //import org.apache.manifoldcf.agents.output.kafka.KafkaConfig;
 import static org.apache.manifoldcf.agents.output.kafka.KafkaConfig.IP;
@@ -44,7 +55,6 @@ import org.apache.manifoldcf.agents.output.kafka.KafkaConfig;
 import org.apache.manifoldcf.crawler.interfaces.IExistingVersions;
 import org.apache.manifoldcf.crawler.interfaces.IProcessActivity;
 import org.apache.manifoldcf.crawler.interfaces.ISeedingActivity;
-import org.apache.manifoldcf.crawler.system.Logging;
 
 /**
  *
@@ -65,18 +75,19 @@ public class KafkaRepositoryConnector extends BaseRepositoryConnector {
    * @param tabsArray is an array of tab names. Add to this array any tab names
    * that are specific to the connector.
    */
-  protected final static String ACTIVITY_READ = "read document";
   public final static String ACTIVITY_FETCH = "fetch";
 
-  protected static final String[] activitiesList = new String[]{ACTIVITY_READ, ACTIVITY_FETCH};
-  KafkaConsumer consumer = null;
+  protected static final String[] activitiesList = new String[]{ACTIVITY_FETCH};
+  ConsumerConnector consumer = null;
+  private ExecutorService executor;
+  Map<String, String> messages = new HashMap<String, String>();
 
   @Override
   public int getConnectorModel() {
-    return MODEL_ADD_CHANGE_DELETE; // We return only incremental documents.
+    return MODEL_ADD; // We return only incremental documents.
   }
 
-  public void setConsumer(KafkaConsumer consumer) {
+  public void setConsumer(ConsumerConnector consumer) {
     this.consumer = consumer;
   }
 
@@ -87,19 +98,29 @@ public class KafkaRepositoryConnector extends BaseRepositoryConnector {
     String IP = params.getParameter(KafkaConfig.IP);
     String PORT = params.getParameter(KafkaConfig.PORT);
 
+    System.out.println("Connecting to zookeeper: " + IP + ":" + PORT);
+
+    try {
+      consumer = kafka.consumer.Consumer.createJavaConsumerConnector(
+              createConsumerConfig(IP + ":" + PORT, "testss"));
+    } catch (Exception e) {
+      e.printStackTrace();
+      consumer = null;
+    }
+  }
+
+  private static ConsumerConfig createConsumerConfig(String a_zookeeper, String a_groupId) {
     Properties props = new Properties();
-    props.put("metadata.broker.list", IP + ":" + PORT);
-    props.put("bootstrap.servers", IP + ":" + PORT);
-    props.put("group.id", "test");
-    props.put("enable.auto.commit", "true");
+    props.put("zookeeper.connect", a_zookeeper);
+    props.put("group.id", a_groupId);
+    props.put("zookeeper.session.timeout.ms", "4000");
+    props.put("zookeeper.sync.time.ms", "200");
     props.put("auto.commit.interval.ms", "1000");
-    props.put("session.timeout.ms", "30000");
-    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put("partition.assignment.strategy", "range");
-    consumer = new KafkaConsumer<String, String>(props);
+    props.put("auto.commit.enable", "false");
+    props.put("auto.offset.reset", "smallest");
+    props.put("consumer.timeout.ms", "20000");
+
+    return new ConsumerConfig(props);
   }
 
   private static String getConfig(ConfigParams config,
@@ -124,28 +145,16 @@ public class KafkaRepositoryConnector extends BaseRepositoryConnector {
 
   @Override
   public String check() throws ManifoldCFException {
-    try {
-      //List<PartitionInfo> partitions = producer.partitionsFor(params.getParameter(KafkaConfig.TOPIC));
-      return super.check();
-    } catch (Exception e) {
-      return "Transient error: " + e.getMessage();
+    if (consumer == null) {
+      return "Transient error: Cannot connect to zookeeper";
     }
-
-    /*try {
-     // We really want to do something more like fetching a document here...
-     alfrescoClient.fetchUserAuthorities("admin");
-     return super.check();
-     } catch (AlfrescoDownException e) {
-     if (Logging.connectors != null) {
-     Logging.connectors.warn(e.getMessage(), e);
-     }
-     return "Connection failed: " + e.getMessage();
-     }*/
+    return super.check();
   }
 
   @Override
   public void disconnect() throws ManifoldCFException {
-    consumer = null;
+    System.out.println("Disconnecting.....");
+    consumer.shutdown();
     super.disconnect();
   }
 
@@ -162,61 +171,41 @@ public class KafkaRepositoryConnector extends BaseRepositoryConnector {
   @Override
   public String addSeedDocuments(ISeedingActivity activities, Specification spec,
           String lastSeedVersion, long seedTime, int jobMode) throws ManifoldCFException, ServiceInterruption {
-    /*try {
-     long lastTransactionId = 0;
-     long lastAclChangesetId = 0;
+    System.out.println("SEED FUNCTION");
+    //activities.addSeedDocument("asdf");
 
-     if (lastSeedVersion != null && !lastSeedVersion.isEmpty()) {
-     StringTokenizer tokenizer = new StringTokenizer(lastSeedVersion, "|");
+    try {
+      String topic = params.getParameter(KafkaConfig.TOPIC);
+      Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+      topicCountMap.put(topic, new Integer(1));
+      Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+      List<KafkaStream<byte[], byte[]>> streams = consumerMap.get(topic);
 
-     if (tokenizer.countTokens() == 2) {
-     lastTransactionId = new Long(tokenizer.nextToken());
-     lastAclChangesetId = new Long(tokenizer.nextToken());
-     }
-     }
+      // now launch all the threads
+      executor = Executors.newFixedThreadPool(1);
+      System.out.println("CONTROL 1");
 
-     if (Logging.connectors != null && Logging.connectors.isDebugEnabled()) {
-     Logging.connectors.debug(MessageFormat.format("Starting from transaction id: {0} and acl changeset id: {1}", new Object[]{lastTransactionId, lastAclChangesetId}));
-     }
+      int threadNumber = 0;
+      /*if (streams == null) {
+       System.out.println("STREAMS IS NULL");
+       } else {
+       System.out.println("STREAMS IS NOT NULL");
+       }*/
+      for (final KafkaStream stream : streams) {
+        System.out.println("CONTROL 2");
+        executor.execute(new ConsumerTest(stream, threadNumber, activities));
+        System.out.println("CONTROL 3");
+        threadNumber++;
+      }
 
-     long transactionIdsProcessed;
-     long aclChangesetsProcessed;
-     do {
-     final AlfrescoResponse response = alfrescoClient.
-     fetchNodes(lastTransactionId,
-     lastAclChangesetId,
-     ConfigurationHandler.getFilters(spec));
-     int count = 0;
-     for (Map<String, Object> doc : response.getDocuments()) {
-     //          String json = gson.toJson(doc);
-     //          activities.addSeedDocument(json);
-     String uuid = doc.get("uuid").toString();
-     activities.addSeedDocument(uuid);
-     count++;
-     }
-     if (Logging.connectors != null && Logging.connectors.isDebugEnabled()) {
-     Logging.connectors.debug(MessageFormat.format("Fetched and added {0} seed documents", new Object[]{new Integer(count)}));
-     }
-
-     transactionIdsProcessed = response.getLastTransactionId() - lastTransactionId;
-     aclChangesetsProcessed = response.getLastAclChangesetId() - lastAclChangesetId;
-
-     lastTransactionId = response.getLastTransactionId();
-     lastAclChangesetId = response.getLastAclChangesetId();
-
-     if (Logging.connectors != null && Logging.connectors.isDebugEnabled()) {
-     Logging.connectors.debug(MessageFormat.format("transaction_id={0}, acl_changeset_id={1}", new Object[]{lastTransactionId, lastAclChangesetId}));
-     }
-     } while (transactionIdsProcessed > 0 || aclChangesetsProcessed > 0);
-
-     if (Logging.connectors != null && Logging.connectors.isDebugEnabled()) {
-     Logging.connectors.debug(MessageFormat.format("Recording {0} as last transaction id and {1} as last changeset id", new Object[]{lastTransactionId, lastAclChangesetId}));
-     }
-     return lastTransactionId + "|" + lastAclChangesetId;
-     } catch (AlfrescoDownException e) {
-     handleAlfrescoDownException(e, "seeding");
-     return null;
-     }*/
+      executor.shutdown();
+      System.out.println("CONTROL 4");
+      executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+      System.out.println("CONTROL 5");
+      //disconnect();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     return "";
   }
 
@@ -225,305 +214,79 @@ public class KafkaRepositoryConnector extends BaseRepositoryConnector {
           IProcessActivity activities, int jobMode, boolean usesDefaultAuthority)
           throws ManifoldCFException, ServiceInterruption {
 
-    /*boolean enableDocumentProcessing = ConfigurationHandler.getEnableDocumentProcessing(spec);
-     for (String doc : documentIdentifiers) {
-
-     String errorCode = null;
-     String errorDesc = null;
-     Long fileLengthLong = null;
-     long startTime = System.currentTimeMillis();
-
-     try {
-
-     String nextVersion = statuses.getIndexedVersionString(doc);
-
-     // Calling again Alfresco API because Document's actions are lost from seeding method
-     AlfrescoResponse response = alfrescoClient.fetchNode(doc);
-     if (response.getDocumentList().isEmpty()) { // Not found seeded document. Could reflect an error in Alfresco
-     if (Logging.connectors != null) {
-     Logging.connectors.warn(MessageFormat.format("Invalid Seeded Document from Alfresco with ID {0}", new Object[]{doc}));
-     }
-     activities.deleteDocument(doc);
-     continue;
-     }
-     Map<String, Object> map = response.getDocumentList().get(0); // Should be only one
-     if ((Boolean) map.get("deleted")) {
-     activities.deleteDocument(doc);
-     continue;
-     }
-
-     // From the map, get the things we know about
-     String uuid = doc;
-     String nodeRef = map.containsKey(FIELD_NODEREF) ? map.get(FIELD_NODEREF).toString() : "";
-     String type = map.containsKey(FIELD_TYPE) ? map.get(FIELD_TYPE).toString() : "";
-     String name = map.containsKey(FIELD_NAME) ? map.get(FIELD_NAME).toString() : "";
-
-     // Fetch document metadata
-     Map<String, Object> properties = alfrescoClient.fetchMetadata(uuid);
-
-     // Process various special fields
-     Object mdObject;
-
-     // Size
-     Long lSize = null;
-     mdObject = properties.get(SIZE_PROPERTY);
-     if (mdObject != null) {
-     String size = mdObject.toString();
-     lSize = new Long(size);
-     }
-
-     // Modified Date
-     Date modifiedDate = null;
-     mdObject = properties.get(MODIFIED_DATE_PROPERTY);
-     if (mdObject != null) {
-     modifiedDate = DateParser.parseISO8601Date(mdObject.toString());
-     }
-
-     // Created Date
-     Date createdDate = null;
-     mdObject = properties.get(CREATED_DATE_PROPERTY);
-     if (mdObject != null) {
-     createdDate = DateParser.parseISO8601Date(mdObject.toString());
-     }
-
-     // Establish the document version.
-     if (modifiedDate == null) {
-     activities.deleteDocument(doc);
-     continue;
-     }
-
-     String documentVersion = (enableDocumentProcessing ? "+" : "-") + new Long(modifiedDate.getTime()).toString();
-
-     if (!activities.checkDocumentNeedsReindexing(doc, documentVersion)) {
-     continue;
-     }
-
-     String mimeType = null;
-     Object mimetypeObject = properties.get(MIMETYPE_PROPERTY);
-     if (mimetypeObject != null) {
-     mimeType = mimetypeObject.toString();
-     }
-
-     if (lSize != null && !activities.checkLengthIndexable(lSize.longValue())) {
-     activities.noDocument(doc, documentVersion);
-     errorCode = activities.EXCLUDED_LENGTH;
-     errorDesc = "Excluding document because of length (" + lSize + ")";
-     continue;
-     }
-
-     if (!activities.checkMimeTypeIndexable(mimeType)) {
-     activities.noDocument(doc, documentVersion);
-     errorCode = activities.EXCLUDED_MIMETYPE;
-     errorDesc = "Excluding document because of mime type (" + mimeType + ")";
-     continue;
-     }
-
-     if (!activities.checkDateIndexable(modifiedDate)) {
-     activities.noDocument(doc, documentVersion);
-     errorCode = activities.EXCLUDED_DATE;
-     errorDesc = "Excluding document because of date (" + modifiedDate + ")";
-     continue;
-     }
-
-     String contentUrlPath = (String) properties.get(CONTENT_URL_PROPERTY);
-     if (contentUrlPath == null || contentUrlPath.isEmpty()) {
-     activities.noDocument(doc, documentVersion);
-     errorCode = "NOURL";
-     errorDesc = "Excluding document because no URL found";
-     continue;
-     }
-
-     if (!activities.checkURLIndexable(contentUrlPath)) {
-     activities.noDocument(doc, documentVersion);
-     errorCode = activities.EXCLUDED_URL;
-     errorDesc = "Excluding document because of URL ('" + contentUrlPath + "')";
-     continue;
-     }
-
-     RepositoryDocument rd = new RepositoryDocument();
-     rd.addField(FIELD_NODEREF, nodeRef);
-     rd.addField(FIELD_TYPE, type);
-     rd.setFileName(name);
-
-     if (modifiedDate != null) {
-     rd.setModifiedDate(modifiedDate);
-     }
-
-     if (createdDate != null) {
-     rd.setCreatedDate(createdDate);
-     }
-
-     for (String property : properties.keySet()) {
-     Object propertyValue = properties.get(property);
-     rd.addField(property, propertyValue.toString());
-     }
-
-     if (mimeType != null && !mimeType.isEmpty()) {
-     rd.setMimeType(mimeType);
-     }
-
-     // Indexing Permissions
-     @SuppressWarnings("unchecked")
-     List<String> permissions = (List<String>) properties.remove(AUTHORITIES_PROPERTY);
-     if (permissions != null) {
-     rd.setSecurityACL(RepositoryDocument.SECURITY_TYPE_DOCUMENT,
-     permissions.toArray(new String[permissions.size()]));
-     }
-
-     // Document Binary Content
-     InputStream stream;
-     long length;
-     byte[] empty = new byte[0];
-
-     if (enableDocumentProcessing) {
-     if (lSize != null) {
-     stream = alfrescoClient.fetchContent(contentUrlPath);
-     if (stream == null) {
-     activities.noDocument(doc, documentVersion);
-     errorCode = "NOSTREAM";
-     errorDesc = "Excluding document because no content stream found";
-     continue;
-     }
-     length = lSize.longValue();
-     } else {
-     stream = new ByteArrayInputStream(empty);
-     length = 0L;
-     }
-     } else {
-     stream = new ByteArrayInputStream(empty);
-     length = 0L;
-     }
-
-     try {
-     rd.setBinary(stream, length);
-     if (Logging.connectors != null && Logging.connectors.isDebugEnabled()) {
-     Logging.connectors.debug(MessageFormat.format("Ingesting with id: {0}, URI {1} and rd {2}", new Object[]{uuid, nodeRef, rd.getFileName()}));
-     }
-     activities.ingestDocumentWithException(doc, documentVersion, contentUrlPath, rd);
-     errorCode = "OK";
-     fileLengthLong = new Long(length);
-     } catch (IOException e) {
-     handleIOException(e, "reading stream");
-     } finally {
-     try {
-     stream.close();
-     } catch (IOException e) {
-     handleIOException(e, "closing stream");
-     }
-     }
-
-     } catch (AlfrescoDownException e) {
-     handleAlfrescoDownException(e, "processing");
-     } catch (ManifoldCFException e) {
-     if (e.getErrorCode() == ManifoldCFException.INTERRUPTED) {
-     errorCode = null;
-     }
-     throw e;
-     } finally {
-     if (errorCode != null) {
-     activities.recordActivity(new Long(startTime), ACTIVITY_FETCH,
-     fileLengthLong, doc, errorCode, errorDesc, null);
-     }
-     }
-     }*/
+    System.out.println("Processing documents.....");
+    RepositoryDocument rd = null;
+    String message = null;
+    String versionString;
+    String uri;
+    int length = 0;
+    for (String documentIdentifier : documentIdentifiers) {
+      rd = new RepositoryDocument();
+      message = messages.get(documentIdentifier);
+      System.out.println("MESSAGE IN PROCESS DOCUMENT : " + message);
+      versionString = documentIdentifier;
+      uri = documentIdentifier;
+      length = message.length();
+      byte[] content = message.getBytes(StandardCharsets.UTF_8);
+      ByteArrayInputStream is = new ByteArrayInputStream(content);
+      try {
+        rd.setBinary(is, length);
+        try {
+          activities.ingestDocumentWithException(documentIdentifier, versionString, uri, rd);
+          //messages.remove(documentIdentifier);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      } finally {
+        try {
+          is.close();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
   }
 
-  protected final static long interruptionRetryTime = 5L * 60L * 1000L;
+  public class ConsumerTest implements Runnable {
 
-  /*
-   protected static void handleAlfrescoDownException(AlfrescoDownException e, String context)
-   throws ManifoldCFException, ServiceInterruption {
-   long currentTime = System.currentTimeMillis();
+    private KafkaStream m_stream;
+    private int m_threadNumber;
+    private ISeedingActivity m_activities;
 
-   // Server doesn't appear to by up.  Try for a brief time then give up.
-   String message = "Server appears down during " + context + ": " + e.getMessage();
-   Logging.connectors.warn(message, e);
-   throw new ServiceInterruption(message,
-   e,
-   currentTime + interruptionRetryTime,
-   -1L,
-   3,
-   true);
-   }
-   */
-  protected static void handleIOException(IOException e, String context)
-          throws ManifoldCFException, ServiceInterruption {
-    if ((e instanceof InterruptedIOException) && (!(e instanceof java.net.SocketTimeoutException))) {
-      throw new ManifoldCFException(e.getMessage(), ManifoldCFException.INTERRUPTED);
+    public ConsumerTest(KafkaStream a_stream, int a_threadNumber, ISeedingActivity activities) {
+      m_threadNumber = a_threadNumber;
+      m_stream = a_stream;
+      m_activities = activities;
     }
 
-    long currentTime = System.currentTimeMillis();
+    @SuppressWarnings("empty-statement")
+    public void run() {
 
-    if (e instanceof java.net.ConnectException) {
-      // Server isn't up at all.  Try for a brief time then give up.
-      String message = "Server could not be contacted during " + context + ": " + e.getMessage();
-      Logging.connectors.warn(message, e);
-      throw new ServiceInterruption(message,
-              e,
-              currentTime + interruptionRetryTime,
-              -1L,
-              3,
-              true);
-    }
+      try {
+        String hashcode = null;
+        String message = null;
 
-    if (e instanceof java.net.SocketTimeoutException) {
-      String message2 = "Socket timeout exception during " + context + ": " + e.getMessage();
-      Logging.connectors.warn(message2, e);
-      throw new ServiceInterruption(message2,
-              e,
-              currentTime + interruptionRetryTime,
-              currentTime + 20L * 60000L,
-              -1,
-              false);
-    }
+        ConsumerIterator<byte[], byte[]> it = m_stream.iterator();
+        while (it.hasNext()) {
+          MessageAndMetadata<byte[], byte[]> it_next = it.next();
+          hashcode = "" + (it_next.hashCode());
+          System.out.println("HASH CODE: " + hashcode);
+          message = new String(it_next.message());
+          //System.out.println(message);
+          //System.out.println("Thread " + m_threadNumber + ": " + new String(it.next().message()));
+          System.out.println("Thread " + m_threadNumber + ": " + message);
+          messages.put(hashcode, message);
+          //consumer.commitOffsets(true);
+          System.out.println("ADDED TO HASH MAP");
+          m_activities.addSeedDocument(hashcode);
+          System.out.println("ADDSEEDDOCUMENT WAS DONE");
+        }
+        System.out.println("Shutting down Thread: " + m_threadNumber);
 
-    if (e.getClass().getName().equals("java.net.SocketException")) {
-      // In the past we would have treated this as a straight document rejection, and
-      // treated it in the same manner as a 400.  The reasoning is that the server can
-      // perfectly legally send out a 400 and drop the connection immediately thereafter,
-      // this a race condition.
-      // However, Solr 4.0 (or the Jetty version that the example runs on) seems
-      // to have a bug where it drops the connection when two simultaneous documents come in
-      // at the same time.  This is the final version of Solr 4.0 so we need to deal with
-      // this.
-      if (e.getMessage().toLowerCase(Locale.ROOT).indexOf("broken pipe") != -1
-              || e.getMessage().toLowerCase(Locale.ROOT).indexOf("connection reset") != -1
-              || e.getMessage().toLowerCase(Locale.ROOT).indexOf("target server failed to respond") != -1) {
-        // Treat it as a service interruption, but with a limited number of retries.
-        // In that way we won't burden the user with a huge retry interval; it should
-        // give up fairly quickly, and yet NOT give up if the error was merely transient
-        String message = "Server dropped connection during " + context + ": " + e.getMessage();
-        Logging.connectors.warn(message, e);
-        throw new ServiceInterruption(message,
-                e,
-                currentTime + interruptionRetryTime,
-                -1L,
-                3,
-                false);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
-
-      // Other socket exceptions are service interruptions - but if we keep getting them, it means 
-      // that a socket timeout is probably set too low to accept this particular document.  So
-      // we retry for a while, then skip the document.
-      String message2 = "Socket exception during " + context + ": " + e.getMessage();
-      Logging.connectors.warn(message2, e);
-      throw new ServiceInterruption(message2,
-              e,
-              currentTime + interruptionRetryTime,
-              currentTime + 20L * 60000L,
-              -1,
-              false);
     }
-
-    // Otherwise, no idea what the trouble is, so presume that retries might fix it.
-    String message3 = "IO exception during " + context + ": " + e.getMessage();
-    Logging.connectors.warn(message3, e);
-    throw new ServiceInterruption(message3,
-            e,
-            currentTime + interruptionRetryTime,
-            currentTime + 2L * 60L * 60000L,
-            -1,
-            true);
   }
 
   @Override

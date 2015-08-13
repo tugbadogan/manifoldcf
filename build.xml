@@ -1493,8 +1493,15 @@ Use Apache Forrest version forrest-0.9-dev or higher.
         <antcall target="download-via-maven">
             <param name="target" value="lib"/>
             <param name="project-path" value="org/apache/kafka"/>
-            <param name="artifact-version" value="0.8.2.0"/>
+            <param name="artifact-version" value="0.8.2.1"/>
             <param name="artifact-name" value="kafka-clients"/>
+            <param name="artifact-type" value="jar"/>
+        </antcall>
+		<antcall target="download-via-maven">
+            <param name="target" value="lib"/>
+            <param name="project-path" value="org/apache/kafka"/>
+            <param name="artifact-version" value="0.8.2.1"/>
+            <param name="artifact-name" value="kafka_2.11"/>
             <param name="artifact-type" value="jar"/>
         </antcall>
 		<antcall target="download-via-maven">
@@ -1504,21 +1511,48 @@ Use Apache Forrest version forrest-0.9-dev or higher.
             <param name="artifact-name" value="commons-lang3"/>
             <param name="artifact-type" value="jar"/>
         </antcall>
-		
-		<!--<antcall target="download-via-maven">
+		<antcall target="download-via-maven">
             <param name="target" value="lib"/>
             <param name="project-path" value="org/scala-lang"/>
-            <param name="artifact-version" value="2.10.1"/>
+            <param name="artifact-version" value="2.11.0"/>
             <param name="artifact-name" value="scala-library"/>
             <param name="artifact-type" value="jar"/>
-        </antcall>		
+        </antcall>
+		<antcall target="download-via-maven">
+            <param name="target" value="lib"/>
+            <param name="project-path" value="com/101tec"/>
+            <param name="artifact-version" value="0.5"/>
+            <param name="artifact-name" value="zkclient"/>
+            <param name="artifact-type" value="jar"/>
+        </antcall>
 		<antcall target="download-via-maven">
             <param name="target" value="lib"/>
             <param name="project-path" value="com/yammer/metrics"/>
             <param name="artifact-version" value="2.2.0"/>
             <param name="artifact-name" value="metrics-core"/>
             <param name="artifact-type" value="jar"/>
-        </antcall>-->
+        </antcall>
+		<antcall target="download-via-maven">
+            <param name="target" value="lib"/>
+            <param name="project-path" value="net/sf/jopt-simple"/>
+            <param name="artifact-version" value="3.2"/>
+            <param name="artifact-name" value="jopt-simple"/>
+            <param name="artifact-type" value="jar"/>
+        </antcall>
+		<antcall target="download-via-maven">
+            <param name="target" value="lib"/>
+            <param name="project-path" value="org/scala-lang/modules"/>
+            <param name="artifact-version" value="1.0.4"/>
+            <param name="artifact-name" value="scala-xml_2.11"/>
+            <param name="artifact-type" value="jar"/>
+        </antcall>
+		<antcall target="download-via-maven">
+            <param name="target" value="lib"/>
+            <param name="project-path" value="org/scala-lang/modules"/>
+            <param name="artifact-version" value="1.0.4"/>
+            <param name="artifact-name" value="scala-parser-combinators_2.11"/>
+            <param name="artifact-type" value="jar"/>
+        </antcall>
     </target>
 
    <target name="download-dropbox-client">
