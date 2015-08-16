@@ -1,19 +1,20 @@
 /**
-* Licensed to the Apache Software Foundation (ASF) under one or more
-* contributor license agreements. See the NOTICE file distributed with
-* this work for additional information regarding copyright ownership.
-* The ASF licenses this file to You under the Apache License, Version 2.0
-* (the "License"); you may not use this file except in compliance with
-* the License. You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.manifoldcf.agents.output.kafka;
 
 import org.apache.manifoldcf.core.interfaces.*;
@@ -22,6 +23,9 @@ import org.apache.manifoldcf.agents.interfaces.*;
 import java.util.*;
 import java.io.*;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -250,34 +254,23 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
   public String check()
           throws ManifoldCFException {
     try {
-      //getSession();
-
       List<PartitionInfo> partitions = producer.partitionsFor(params.getParameter(KafkaConfig.TOPIC));
       return super.check();
-    } catch (Exception e) {
-      return "Transient error: " + e.getMessage();
+    } catch (ManifoldCFException e) {
+      return "Connection failed: " + e.getMessage();
     }
   }
 
-  /**
-   * Get an output version string, given an output specification. The output
-   * version string is used to uniquely describe the pertinent details of the
-   * output specification and the configuration, to allow the Connector
-   * Framework to determine whether a document will need to be output again.
-   * Note that the contents of the document cannot be considered by this method,
-   * and that a different version string (defined in IRepositoryConnector) is
-   * used to describe the version of the actual document.
+  /** Get an output version string, given an output specification.  The output version string is used to uniquely describe the pertinent details of
+   * the output specification and the configuration, to allow the Connector Framework to determine whether a document will need to be output again.
+   * Note that the contents of the document cannot be considered by this method, and that a different version string (defined in IRepositoryConnector)
+   * is used to describe the version of the actual document.
    *
-   * This method presumes that the connector object has been configured, and it
-   * is thus able to communicate with the output data store should that be
+   * This method presumes that the connector object has been configured, and it is thus able to communicate with the output data store should that be
    * necessary.
-   *
-   * @param spec is the current output specification for the job that is doing
-   * the crawling.
-   * @return a string, of unlimited length, which uniquely describes output
-   * configuration and specification in such a way that if two such strings are
-   * equal, the document will not need to be sent again to the output data
-   * store.
+   *@param spec is the current output specification for the job that is doing the crawling.
+   *@return a string, of unlimited length, which uniquely describes output configuration and specification in such a way that if two such strings are equal,
+   * the document will not need to be sent again to the output data sstore.
    */
   @Override
   public VersionContext getPipelineDescription(Specification spec)
@@ -285,40 +278,22 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     return new VersionContext("", params, spec);
   }
 
-  /**
-   * Add (or replace) a document in the output data store using the connector.
-   * This method presumes that the connector object has been configured, and it
-   * is thus able to communicate with the output data store should that be
-   * necessary. The OutputSpecification is *not* provided to this method,
-   * because the goal is consistency, and if output is done it must be
-   * consistent with the output description, since that was what was partly used
-   * to determine if output should be taking place. So it may be necessary for
-   * this method to decode an output description string in order to determine
-   * what should be done.
-   *
-   * @param documentURI is the URI of the document. The URI is presumed to be
-   * the unique identifier which the output data store will use to process and
-   * serve the document. This URI is constructed by the repository connector
-   * which fetches the document, and is thus universal across all output
-   * connectors.
-   * @param outputDescription is the description string that was constructed for
-   * this document by the getOutputDescription() method.
-   * @param document is the document data to be processed (handed to the output
-   * data store).
-   * @param authorityNameString is the name of the authority responsible for
-   * authorizing any access tokens passed in with the repository document. May
-   * be null.
-   * @param activities is the handle to an object that the implementer of an
-   * output connector may use to perform operations, such as logging processing
-   * activity.
-   * @return the document status (accepted or permanently rejected).
-   */
+  /** Add (or replace) a document in the output data store using the connector.
+  * This method presumes that the connector object has been configured, and it is thus able to communicate with the output data store should that be
+  * necessary.
+  *@param documentURI is the URI of the document.  The URI is presumed to be the unique identifier which the output data store will use to process
+  * and serve the document.  This URI is constructed by the repository connector which fetches the document, and is thus universal across all output connectors.
+  *@param pipelineDescription includes the description string that was constructed for this document by the getOutputDescription() method.
+  *@param document is the document data to be processed (handed to the output data store).
+  *@param authorityNameString is the name of the authority responsible for authorizing any access tokens passed in with the repository document.  May be null.
+  *@param activities is the handle to an object that the implementer of a pipeline connector may use to perform operations, such as logging processing activity,
+  * or sending a modified document to the next stage in the pipeline.
+  *@return the document status (accepted or permanently rejected).
+  *@throws IOException only if there's a stream error reading the document data.
+  */
   @Override
   public int addOrReplaceDocumentWithException(String documentURI, VersionContext outputDescription, RepositoryDocument document, String authorityNameString, IOutputAddActivity activities)
           throws ManifoldCFException, ServiceInterruption, IOException {
-    // Establish a session
-    //getSession();
-
     //System.out.println("Starting to ingest document....");
     try {
       KafkaMessage kafkaMessage = new KafkaMessage();
@@ -328,21 +303,24 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
 
       ProducerRecord record = new ProducerRecord(topic, finalString);
       producer.send(record).get();
-    } catch (Exception e) {
-      e.printStackTrace();
-      activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "REJECTED DOCUMENT " + e.getMessage(), null);
-      return DOCUMENTSTATUS_REJECTED;
+    } catch (InterruptedException e) {
+      long currentTime = System.currentTimeMillis();
+      throw new ServiceInterruption("Interrupted: " + e.getMessage(), e,
+              currentTime + 300000L, currentTime + 3 * 60 * 60000L, -1, false);
+    } catch (ExecutionException e) {
+      long currentTime = System.currentTimeMillis();
+      throw new ServiceInterruption("Execution Error: " + e.getMessage(), e,
+              currentTime + 300000L, currentTime + 3 * 60 * 60000L, -1, false);
     }
+
     activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "OK", null);
     return DOCUMENTSTATUS_ACCEPTED;
-
   }
 
   private static String getConfig(ConfigParams config,
           String parameter,
           String defaultValue) {
-    if(config == null)
-    {
+    if (config == null) {
       return defaultValue;
     }
     final String protocol = config.getParameter(parameter);
