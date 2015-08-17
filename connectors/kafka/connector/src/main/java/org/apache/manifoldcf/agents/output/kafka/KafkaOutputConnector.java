@@ -304,13 +304,9 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
       ProducerRecord record = new ProducerRecord(topic, finalString);
       producer.send(record).get();
     } catch (InterruptedException e) {
-      long currentTime = System.currentTimeMillis();
-      throw new ServiceInterruption("Interrupted: " + e.getMessage(), e,
-              currentTime + 300000L, currentTime + 3 * 60 * 60000L, -1, false);
+      new ManifoldCFException("interrupted", ManifoldCFException.INTERRUPTED);
     } catch (ExecutionException e) {
-      long currentTime = System.currentTimeMillis();
-      throw new ServiceInterruption("Execution Error: " + e.getMessage(), e,
-              currentTime + 300000L, currentTime + 3 * 60 * 60000L, -1, false);
+      new ManifoldCFException("interrupted", ManifoldCFException.INTERRUPTED);
     }
 
     activities.recordActivity(null, INGEST_ACTIVITY, new Long(document.getBinaryLength()), documentURI, "OK", null);
