@@ -53,7 +53,7 @@ public class KafkaMessage {
     OutputStream out = new ByteArrayOutputStream();
     try {
       inputStream = document.getBinaryStream();
-      
+
       // print to our byte array output stream
       PrintWriter pw = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 

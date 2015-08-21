@@ -24,8 +24,6 @@ import java.util.*;
 import java.io.*;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -261,16 +259,25 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     }
   }
 
-  /** Get an output version string, given an output specification.  The output version string is used to uniquely describe the pertinent details of
-   * the output specification and the configuration, to allow the Connector Framework to determine whether a document will need to be output again.
-   * Note that the contents of the document cannot be considered by this method, and that a different version string (defined in IRepositoryConnector)
-   * is used to describe the version of the actual document.
+  /**
+   * Get an output version string, given an output specification. The output
+   * version string is used to uniquely describe the pertinent details of the
+   * output specification and the configuration, to allow the Connector
+   * Framework to determine whether a document will need to be output again.
+   * Note that the contents of the document cannot be considered by this method,
+   * and that a different version string (defined in IRepositoryConnector) is
+   * used to describe the version of the actual document.
    *
-   * This method presumes that the connector object has been configured, and it is thus able to communicate with the output data store should that be
+   * This method presumes that the connector object has been configured, and it
+   * is thus able to communicate with the output data store should that be
    * necessary.
-   *@param spec is the current output specification for the job that is doing the crawling.
-   *@return a string, of unlimited length, which uniquely describes output configuration and specification in such a way that if two such strings are equal,
-   * the document will not need to be sent again to the output data sstore.
+   *
+   * @param spec is the current output specification for the job that is doing
+   * the crawling.
+   * @return a string, of unlimited length, which uniquely describes output
+   * configuration and specification in such a way that if two such strings are
+   * equal, the document will not need to be sent again to the output data
+   * sstore.
    */
   @Override
   public VersionContext getPipelineDescription(Specification spec)
@@ -278,19 +285,32 @@ public class KafkaOutputConnector extends org.apache.manifoldcf.agents.output.Ba
     return new VersionContext("", params, spec);
   }
 
-  /** Add (or replace) a document in the output data store using the connector.
-  * This method presumes that the connector object has been configured, and it is thus able to communicate with the output data store should that be
-  * necessary.
-  *@param documentURI is the URI of the document.  The URI is presumed to be the unique identifier which the output data store will use to process
-  * and serve the document.  This URI is constructed by the repository connector which fetches the document, and is thus universal across all output connectors.
-  *@param pipelineDescription includes the description string that was constructed for this document by the getOutputDescription() method.
-  *@param document is the document data to be processed (handed to the output data store).
-  *@param authorityNameString is the name of the authority responsible for authorizing any access tokens passed in with the repository document.  May be null.
-  *@param activities is the handle to an object that the implementer of a pipeline connector may use to perform operations, such as logging processing activity,
-  * or sending a modified document to the next stage in the pipeline.
-  *@return the document status (accepted or permanently rejected).
-  *@throws IOException only if there's a stream error reading the document data.
-  */
+  /**
+   * Add (or replace) a document in the output data store using the connector.
+   * This method presumes that the connector object has been configured, and it
+   * is thus able to communicate with the output data store should that be
+   * necessary.
+   *
+   * @param documentURI is the URI of the document. The URI is presumed to be
+   * the unique identifier which the output data store will use to process and
+   * serve the document. This URI is constructed by the repository connector
+   * which fetches the document, and is thus universal across all output
+   * connectors.
+   * @param pipelineDescription includes the description string that was
+   * constructed for this document by the getOutputDescription() method.
+   * @param document is the document data to be processed (handed to the output
+   * data store).
+   * @param authorityNameString is the name of the authority responsible for
+   * authorizing any access tokens passed in with the repository document. May
+   * be null.
+   * @param activities is the handle to an object that the implementer of a
+   * pipeline connector may use to perform operations, such as logging
+   * processing activity, or sending a modified document to the next stage in
+   * the pipeline.
+   * @return the document status (accepted or permanently rejected).
+   * @throws IOException only if there's a stream error reading the document
+   * data.
+   */
   @Override
   public int addOrReplaceDocumentWithException(String documentURI, VersionContext outputDescription, RepositoryDocument document, String authorityNameString, IOutputAddActivity activities)
           throws ManifoldCFException, ServiceInterruption, IOException {

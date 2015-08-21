@@ -1,21 +1,20 @@
-/* $Id$ */
-
 /**
-* Licensed to the Apache Software Foundation (ASF) under one or more
-* contributor license agreements. See the NOTICE file distributed with
-* this work for additional information regarding copyright ownership.
-* The ASF licenses this file to You under the Apache License, Version 2.0
-* (the "License"); you may not use this file except in compliance with
-* the License. You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.manifoldcf.agents.output.kafka;
 
 import java.util.Locale;
@@ -23,16 +22,13 @@ import java.util.Locale;
 import org.apache.manifoldcf.core.tests.HTMLTester;
 import org.junit.Test;
 
-/** Basic UI navigation tests */
-public class NavigationHSQLDBUI extends BaseUIHSQLDB
-{
+public class NavigationHSQLDBUI extends BaseUIHSQLDB {
 
   @Test
   public void createConnectionsAndJob()
-    throws Exception
-  {
+          throws Exception {
     testerInstance.newTest(Locale.US);
-    
+
     HTMLTester.Window window;
     HTMLTester.Link link;
     HTMLTester.Form form;
@@ -41,7 +37,7 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     HTMLTester.Button button;
     HTMLTester.Radiobutton radiobutton;
     HTMLTester.Loop loop;
-    
+
     window = testerInstance.openMainWindow("http://localhost:8346/mcf-crawler-ui/index.jsp");
 
     // Login
@@ -94,7 +90,7 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     textarea.setValue(testerInstance.createStringDescription("9092"));
     textarea = form.findTextarea(testerInstance.createStringDescription("topic"));
     textarea.setValue(testerInstance.createStringDescription("topic"));
-    
+
     // Go back to the Name tab
     link = window.findLink(testerInstance.createStringDescription("Name tab"));
     link.click();
@@ -102,7 +98,7 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     window = testerInstance.findWindow(null);
     button = window.findButton(testerInstance.createStringDescription("Save this output connection"));
     button.click();
-    
+
     // Define a repository connection via the UI
     window = testerInstance.findWindow(null);
     link = window.findLink(testerInstance.createStringDescription("List repository connections"));
@@ -132,7 +128,7 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     // Now save the connection.
     button = window.findButton(testerInstance.createStringDescription("Save this connection"));
     button.click();
-    
+
     // Create a job
     window = testerInstance.findWindow(null);
     link = window.findLink(testerInstance.createStringDescription("List jobs"));
@@ -191,11 +187,11 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
 
     // Delete the job
     window = testerInstance.findWindow(null);
-    HTMLTester.StringDescription jobID = window.findMatch(testerInstance.createStringDescription("<!--jobid=(.*?)-->"),0);
+    HTMLTester.StringDescription jobID = window.findMatch(testerInstance.createStringDescription("<!--jobid=(.*?)-->"), 0);
     testerInstance.printValue(jobID);
     link = window.findLink(testerInstance.createStringDescription("Delete this job"));
     link.click();
-    
+
     // Wait for the job to go away
     loop = testerInstance.beginLoop(120);
     window = testerInstance.findWindow(null);
@@ -206,7 +202,7 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     testerInstance.printValue(isJobNotPresent);
     loop.breakWhenTrue(isJobNotPresent);
     loop.endLoop();
-    
+
     // Delete the repository connection
     window = testerInstance.findWindow(null);
     link = window.findLink(testerInstance.createStringDescription("List repository connections"));
@@ -214,7 +210,7 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     window = testerInstance.findWindow(null);
     link = window.findLink(testerInstance.createStringDescription("Delete MyRepositoryConnection"));
     link.click();
-    
+
     // Delete the output connection
     window = testerInstance.findWindow(null);
     link = window.findLink(testerInstance.createStringDescription("List output connections"));
@@ -222,8 +218,8 @@ public class NavigationHSQLDBUI extends BaseUIHSQLDB
     window = testerInstance.findWindow(null);
     link = window.findLink(testerInstance.createStringDescription("Delete MyOutputConnection"));
     link.click();
-    
+
     testerInstance.executeTest();
   }
-  
+
 }
