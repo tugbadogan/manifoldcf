@@ -34,7 +34,7 @@
   <modules>
     <module>core</module>
     <module>connector-common</module>
-	<module>ui-core</module>
+    <module>ui-core</module>
     <module>agents</module>
     <module>pull-agent</module>
     <module>authority-servlet</module>

@@ -36,13 +36,13 @@
     <module>activedirectory</module>
     <module>filesystem</module>
     <module>gts</module>
-	<module>hdfs</module>
+    <module>hdfs</module>
     <module>jcifs</module>
     <module>jdbc</module>
     <module>gridfs</module>
     <module>ldap</module>
     <module>nullauthority</module>
-	<module>kafka</module>
+    <module>kafka</module>
     <module>nulloutput</module>
     <module>nulltransformation</module>
     <module>rss</module>
@@ -52,7 +52,7 @@
     <module>cmis</module>
     <module>opensearchserver</module>
     <module>wiki</module>
-	<module>alfresco</module>
+    <module>alfresco</module>
     <module>dropbox</module>
     <module>googledrive</module>
     <module>jira</module>
