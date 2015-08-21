@@ -1513,16 +1513,9 @@ Use Apache Forrest version forrest-0.9-dev or higher.
         </antcall>
 		<antcall target="download-via-maven">
             <param name="target" value="lib"/>
-            <param name="project-path" value="org/scala-lang"/>
-            <param name="artifact-version" value="2.11.0"/>
-            <param name="artifact-name" value="scala-library"/>
-            <param name="artifact-type" value="jar"/>
-        </antcall>
-		<antcall target="download-via-maven">
-            <param name="target" value="lib"/>
-            <param name="project-path" value="com/101tec"/>
-            <param name="artifact-version" value="0.5"/>
-            <param name="artifact-name" value="zkclient"/>
+            <param name="project-path" value="org/apache/zookeeper"/>
+            <param name="artifact-version" value="3.4.6"/>
+            <param name="artifact-name" value="zookeeper"/>
             <param name="artifact-type" value="jar"/>
         </antcall>
 		<antcall target="download-via-maven">
@@ -1530,6 +1523,13 @@ Use Apache Forrest version forrest-0.9-dev or higher.
             <param name="project-path" value="com/yammer/metrics"/>
             <param name="artifact-version" value="2.2.0"/>
             <param name="artifact-name" value="metrics-core"/>
+            <param name="artifact-type" value="jar"/>
+        </antcall>
+		<antcall target="download-via-maven">
+            <param name="target" value="lib"/>
+            <param name="project-path" value="org/scala-lang"/>
+            <param name="artifact-version" value="2.11.0"/>
+            <param name="artifact-name" value="scala-library"/>
             <param name="artifact-type" value="jar"/>
         </antcall>
 		<antcall target="download-via-maven">

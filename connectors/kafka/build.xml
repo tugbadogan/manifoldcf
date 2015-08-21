@@ -39,4 +39,10 @@
             <param name="connector-class" value="org.apache.manifoldcf.agents.output.kafka.KafkaOutputConnector"/>
         </antcall>
     </target>
+	
+    <path id="connector-test-classpath">
+        <path refid="mcf-connector-build.connector-test-classpath"/>
+        <fileset file="../../lib/*.jar"/>
+    </path>
+
 </project>

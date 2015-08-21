@@ -42,6 +42,7 @@
     <module>gridfs</module>
     <module>ldap</module>
     <module>nullauthority</module>
+	<module>kafka</module>
     <module>nulloutput</module>
     <module>nulltransformation</module>
     <module>rss</module>
